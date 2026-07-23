@@ -14,6 +14,7 @@ router.get("/", async (req, res) => {
             WHERE category = $1
             ORDER BY product_id ASC
         `,[category]);
+
         }else if(search){
             result = await pool.query(`
         SELECT * FROM products
