@@ -2,14 +2,19 @@ import type { Product, NewProduct, UpdatedProduct } from "../types/products";
 
 const API_URL = "http://localhost:5000/products";
 
-export async function getProducts(): Promise<Product[]> {
-    const res = await fetch(API_URL);
+export async function getProducts(category?: string) {
+  let url = API_URL;
+  if (category) {
+    url += `?category=${category}`;
+  }
 
-    if (!res.ok) {
-        throw new Error("Failed to fetch products");
-    }
+  const res = await fetch(url);
 
-    return res.json();
+  if (!res.ok) {
+    throw new Error("Failed to fetch products");
+  }
+
+  return res.json();
 }
 
 export async function addProduct(product: NewProduct) {
@@ -20,9 +25,10 @@ export async function addProduct(product: NewProduct) {
         },
         body: JSON.stringify(product),
     });
+    const data = await res.json()
 
     if (!res.ok) {
-        throw new Error("Failed to add product");
+        throw new Error(data.message);
     }
 
     return res.json();

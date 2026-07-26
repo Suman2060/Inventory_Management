@@ -1,6 +1,6 @@
 import pool from "../db/db.js";
 
-export async function isNumber(number) {
+export  function isNumber(number) {
     if (
         number === undefined ||
         number === null ||
