@@ -11,4 +11,11 @@ export interface NewProduct {
   category: string;
   price: number;
   quantity: number;
-}   
+}
+
+export interface UpdatedProduct {
+  product_name?: string;
+  category?: string;
+  price?: number;
+  quantity?: number;
+}

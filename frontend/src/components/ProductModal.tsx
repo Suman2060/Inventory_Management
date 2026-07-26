@@ -1,36 +1,44 @@
 import ProductForm from "./ProductForm";
+import type { Product } from "../types/products";
 
 interface ProductModalProps {
     isOpen: boolean;
     onClose: () => void;
+    selectedProduct: Product | null;
     onProductAdded: () => void;
 }
 
 const ProductModal = ({
     isOpen,
     onClose,
+    selectedProduct,
     onProductAdded,
 }: ProductModalProps) => {
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
 
-            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg relative">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
 
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-2xl"
-                >
-                    ×
-                </button>
+                <div className="flex justify-between items-center mb-5">
 
-                <h2 className="text-2xl font-bold mb-6">
-                    Add Product
-                </h2>
+                    <h2 className="text-xl font-semibold">
+                        {selectedProduct ? "Edit Product" : "Add Product"}
+                    </h2>
+
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-red-500 text-xl"
+                    >
+                        ✕
+                    </button>
+
+                </div>
 
                 <ProductForm
+                    selectedProduct={selectedProduct}
                     onProductAdded={onProductAdded}
                 />
 

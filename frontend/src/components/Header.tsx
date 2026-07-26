@@ -2,14 +2,10 @@ import SearchBar from "./SearchBar";
 import FilterBar from "./FilterBar";
 
 interface HeaderProps {
-    search: string;
-    setSearch: React.Dispatch<React.SetStateAction<string>>;
     onAddProduct: () => void;
 }
 
 const Header = ({
-    search,
-    setSearch,
     onAddProduct,
 }: HeaderProps) => {
     return (
@@ -29,10 +25,7 @@ const Header = ({
             {/* Right Section */}
             <div className="flex items-center gap-4">
 
-                <SearchBar
-                    search={search}
-                    setSearch={setSearch}
-                />
+                <SearchBar />
 
                 <FilterBar />
 

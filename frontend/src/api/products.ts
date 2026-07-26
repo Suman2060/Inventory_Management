@@ -1,10 +1,9 @@
-import type { Product,NewProduct } from "../types/products";
+import type { Product, NewProduct, UpdatedProduct } from "../types/products";
 
 const API_URL = "http://localhost:5000/products";
 
 export async function getProducts(): Promise<Product[]> {
     const res = await fetch(API_URL);
-    console.log(res)
 
     if (!res.ok) {
         throw new Error("Failed to fetch products");
@@ -27,4 +26,37 @@ export async function addProduct(product: NewProduct) {
     }
 
     return res.json();
+}
+
+export async function updateProduct(
+    id: number,
+    product: UpdatedProduct
+) {
+    const res = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to update product");
+    }
+
+    return res.json();
+}
+
+
+export async function deleteProduct(id:number){
+    const res= await fetch(`${API_URL}/${id}`,{
+        method:"DELETE",
+    })
+
+    if(!res.ok){
+        throw new Error("Failed to delete product")
+    }
+
+    return res.json()
+
 }

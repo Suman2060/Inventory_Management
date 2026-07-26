@@ -1,41 +1,43 @@
 import { Router } from "express";
 import pool from "../db/db.js";
+import { isNumber, isUnique } from "..//validation/productValidation.js"
 
 const router = Router();
 
 // GET all products
 router.get("/", async (req, res) => {
-    const {category,search,lowStock} = req.query
+    const { category, search, lowStock } = req.query;
     let result;
-     try {
-        if(category){
-             result = await pool.query(`
-            SELECT * FROM products
-            WHERE category = $1
-            ORDER BY product_id ASC
-        `,[category]);
 
-        }else if(search){
+    try {
+        if (category) {
             result = await pool.query(`
-        SELECT * FROM products
-        WHERE product_name ILIKE $1
-        ORDER BY product_id ASC
-        `,
-        [`%${search}%`]);
-        
-        }else if(lowStock){
-             result = await pool.query(`
-            SELECT * FROM products
-            WHERE quantity<$1
-            ORDER BY product_id ASC
-        `,[lowStock]);
+                SELECT * FROM products
+                WHERE category = $1
+                ORDER BY product_id ASC
+            `, [category]);
+
+        } else if (search) {
+            result = await pool.query(`
+                SELECT * FROM products
+                WHERE product_name ILIKE $1
+                ORDER BY product_id ASC
+            `, [`%${search}%`]);
+
+        } else if (lowStock) {
+            result = await pool.query(`
+                SELECT * FROM products
+                WHERE quantity < $1
+                ORDER BY product_id ASC
+            `, [lowStock]);
+
+        } else {
+            result = await pool.query(`
+                SELECT * FROM products
+                ORDER BY product_id ASC
+            `);
         }
-        else{
-         result = await pool.query(`
-            SELECT * FROM products
-            ORDER BY product_id ASC
-        `);
-        }
+
         res.json(result.rows);
 
     } catch (err) {
@@ -52,6 +54,17 @@ router.post("/", async (req, res) => {
     const { product_name, category, price, quantity } = req.body;
 
     try {
+        // Basic presence checks
+        if (!product_name || !category) {
+            return res.status(400).json({
+                message: "product_name and category are required"
+            });
+        }
+
+        await isNumber(price);
+        await isNumber(quantity);
+        await isUnique(product_name);
+
         const result = await pool.query(
             `
             INSERT INTO products
@@ -68,7 +81,15 @@ router.post("/", async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err.message);
+        console.error("Error adding product:", err.message);
+
+        if (err.message === "Expected a number") {
+            return res.status(400).json({ message: err.message });
+        }
+
+        if (err.message === "Product already exists") {
+            return res.status(409).json({ message: err.message });
+        }
 
         res.status(500).json({
             message: "Server Error"
@@ -76,6 +97,7 @@ router.post("/", async (req, res) => {
     }
 });
 
+// PUT update product
 router.put("/:id", async (req, res) => {
     const { id } = req.params;
     const { product_name, category, price, quantity } = req.body;
@@ -114,7 +136,6 @@ router.put("/:id", async (req, res) => {
         });
     }
 
-    // // Add id as the last parameter(Note: ToBe Asked)
     values.push(id);
 
     try {
@@ -122,7 +143,7 @@ router.put("/:id", async (req, res) => {
             `
             UPDATE products
             SET ${fields.join(", ")}
-            WHERE product_id = $${values.length}   
+            WHERE product_id = $${values.length}
             RETURNING *;
             `,
             values
@@ -142,7 +163,7 @@ router.put("/:id", async (req, res) => {
     }
 });
 
-
+// DELETE product
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
@@ -175,4 +196,5 @@ router.delete("/:id", async (req, res) => {
         });
     }
 });
+
 export default router;

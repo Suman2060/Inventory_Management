@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { addProduct } from "../api/products";
+import { useEffect, useState } from "react";
+import { addProduct, updateProduct } from "../api/products";
+import type { Product } from "../types/products";
 
 interface ProductFormProps {
     onProductAdded: () => void;
+    selectedProduct: Product | null;
 }
 
-const ProductForm = ({ onProductAdded }: ProductFormProps) => {
-
+const ProductForm = ({
+    onProductAdded,
+    selectedProduct,
+}: ProductFormProps) => {
     const [formData, setFormData] = useState({
         product_name: "",
         category: "",
@@ -14,31 +18,54 @@ const ProductForm = ({ onProductAdded }: ProductFormProps) => {
         quantity: "",
     });
 
-    function handleChange(
-        e: React.ChangeEvent<HTMLInputElement>
-    ) {
+    useEffect(() => {
+        if (!selectedProduct) {
+            setFormData({
+                product_name: "",
+                category: "",
+                price: "",
+                quantity: "",
+            });
+            return;
+        }
 
+        setFormData({
+            product_name: selectedProduct.product_name,
+            category: selectedProduct.category,
+            price: selectedProduct.price.toString(),
+            quantity: selectedProduct.quantity.toString(),
+        });
+    }, [selectedProduct]);
+
+    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
-
     }
 
     async function handleSubmit(
         e: React.FormEvent<HTMLFormElement>
     ) {
-
         e.preventDefault();
 
-        try {
-
-            await addProduct({
+        const productData = {
                 product_name: formData.product_name,
                 category: formData.category,
                 price: Number(formData.price),
                 quantity: Number(formData.quantity),
-            });
+        };
+        try {
+            if (selectedProduct) {
+                // UPDATE
+                await updateProduct(
+                    selectedProduct.product_id,
+                    productData
+                );
+            } else {
+                // CREATE
+                await addProduct(productData);
+            }
 
             onProductAdded();
 
@@ -55,12 +82,10 @@ const ProductForm = ({ onProductAdded }: ProductFormProps) => {
     }
 
     return (
-
         <form
             onSubmit={handleSubmit}
             className="space-y-4"
         >
-
             <input
                 type="text"
                 name="product_name"
@@ -99,13 +124,11 @@ const ProductForm = ({ onProductAdded }: ProductFormProps) => {
 
             <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-                Save Product
+                {selectedProduct ? "Update Product" : "Save Product"}
             </button>
-
         </form>
-
     );
 };
 
