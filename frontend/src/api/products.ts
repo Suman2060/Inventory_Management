@@ -1,4 +1,4 @@
-import type { Product, NewProduct, UpdatedProduct } from "../types/products";
+import type { NewProduct, UpdatedProduct } from "../types/products";
 
 const API_URL = "http://localhost:5000/products";
 
@@ -31,7 +31,7 @@ export async function addProduct(product: NewProduct) {
         throw new Error(data.message);
     }
 
-    return res.json();
+    return data;
 }
 
 export async function updateProduct(
