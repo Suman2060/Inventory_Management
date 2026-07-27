@@ -1,11 +1,15 @@
 interface FilterBarProps {
   category: string;
   setCategory: React.Dispatch<React.SetStateAction<string>>;
+  lowStock: boolean;
+  setLowStock: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const FilterBar = ({
   category,
   setCategory,
+  lowStock,
+  setLowStock
 }: FilterBarProps) => {
 
   return (
@@ -33,9 +37,16 @@ const FilterBar = ({
       </select>
 
       <button
-        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          lowStock
+            ? "bg-yellow-600 text-white ring-2 ring-yellow-400 font-semibold"
+            : "bg-yellow-500 text-white hover:bg-yellow-600"
+        }`}
+        onClick={() => {
+          setLowStock((prev) => !prev);
+        }}
       >
-        Low Stock
+        Low Stock {lowStock ? "(Active)" : ""}
       </button>
 
     </div>

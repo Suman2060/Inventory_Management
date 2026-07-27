@@ -6,7 +6,9 @@ interface HeaderProps {
   category: string;
   setCategory: React.Dispatch<React.SetStateAction<string>>;
   search:string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  lowStock:boolean;
+  setLowStock: React.Dispatch<React.SetStateAction<boolean>>;
 
 }
 
@@ -15,7 +17,9 @@ const Header = ({
   category,
   setCategory,
   search,
-  setSearch
+  setSearch,
+  lowStock,
+  setLowStock
 }: HeaderProps) => {
   return (
     <header className="flex items-center justify-between mb-8">
@@ -40,6 +44,8 @@ const Header = ({
         <FilterBar
           category={category}
           setCategory={setCategory}
+          lowStock = {lowStock}
+          setLowStock={setLowStock}
         />
 
         <button

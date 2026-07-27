@@ -7,37 +7,49 @@ const router = Router();
 // GET all products
 router.get("/", async (req, res) => {
     const { category, search, lowStock } = req.query;
-    let result;
-    let query =  `SELECT * FROM products` ;
+
+    let query = `SELECT * FROM products`;
 
     try {
-        const conditions  =  [];
-        const values  = []
+        const conditions = [];
+        const values = [];
 
-        if(category){
-            conditions.push(`category = $${values.length + 1}`)
-            values.push(category)
+        // Category filter
+        if (category) {
+            conditions.push(`category = $${values.length + 1}`);
+            values.push(category);
         }
-        if(search){
-            conditions.push(`product_name ILIKE $${values.length + 1}`)
-            values.push(`%${search}%`)
-        }
-        if(conditions.length>0){
-            query += ` WHERE ${conditions.join(" AND ")}`
-        }
-        query += ` ORDER BY  product_id ASC`
 
-        console.log(query);
-        console.log(values);
-        
-        result = await  pool.query(query,values)
+        if (search) {
+            conditions.push(`product_name ILIKE $${values.length + 1}`);
+            values.push(`%${search}%`);
+        }
 
-        res.json(result.rows)
+        if (lowStock === "true") {
+            conditions.push(`quantity < $${values.length + 1}`);
+            values.push(10); 
+        }
+
+
+        if (conditions.length > 0) {
+            query += ` WHERE ${conditions.join(" AND ")}`;
+        }
+
+        // Sort products
+        query += ` ORDER BY product_id ASC`;
+
+        console.log("Query:", query);
+        console.log("Values:", values);
+
+        const result = await pool.query(query, values);
+
+        res.json(result.rows);
+
     } catch (err) {
         console.error(err.message);
 
         res.status(500).json({
-            message: "Server Error"
+            message: "Server Error",
         });
     }
 });
@@ -47,7 +59,7 @@ router.post("/", async (req, res) => {
     const { product_name, category, price, quantity } = req.body;
 
     try {
-        // Basic presence checks
+    
         if (!product_name || !category) {
             return res.status(400).json({
                 message: "product_name and category are required"

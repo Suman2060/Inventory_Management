@@ -14,16 +14,17 @@ function Dashboard() {
   const [search,setSearch] =  useState("")
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [lowStock,setLowStock] =  useState(false)
 
   useEffect(() => {
-    loadProducts(category,search);
-  }, [category,search]);
+    loadProducts(category,search,lowStock);
+  }, [category,search,lowStock]);
 
-  async function loadProducts(category: string,search: string) {
+  async function loadProducts(category: string,search: string,lowStock:boolean) {
     try {
       setLoading(true);
 
-      const data = await getProducts(category,search);
+      const data = await getProducts(category,search,lowStock);
 
       setProducts(data);
     } catch (err) {
@@ -50,7 +51,7 @@ function Dashboard() {
   }
 
   function handleProductSuccess() {
-    loadProducts(category);
+    loadProducts(category,search,lowStock);
     handleModalClose();
   }
 
@@ -64,7 +65,7 @@ function Dashboard() {
     try {
       await deleteProduct(id);
 
-      loadProducts(category);
+      loadProducts(category,search,lowStock);
     } catch (err) {
       console.error(err);
     }
@@ -78,6 +79,8 @@ function Dashboard() {
         setCategory={setCategory}
         search={search}
         setSearch={setSearch}
+        lowStock= {lowStock}
+        setLowStock ={setLowStock}
       />
 
       {loading && <p>Loading...</p>}

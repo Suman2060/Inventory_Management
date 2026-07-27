@@ -2,7 +2,7 @@ import type { NewProduct, UpdatedProduct } from "../types/products";
 
 const API_URL = "http://localhost:5000/products";
 
-export async function getProducts(category?:string,search?:string) {
+export async function getProducts(category?:string,search?:string,lowStock?:boolean) {
     const params = new URLSearchParams()
 
     if(category){
@@ -13,9 +13,14 @@ export async function getProducts(category?:string,search?:string) {
         params.append("search",search)
     }
 
-    const url = params.toString()
-            ? `${API_URL}?${params.toString()}`
-            : API_URL;
+    if(lowStock){
+        params.append("lowStock","true")
+    }
+
+    const query = params.toString()
+   const url = query
+    ? `${API_URL}?${query}`
+    : API_URL;
 
     const res =  await fetch(url)
 
