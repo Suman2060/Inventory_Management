@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  getProducts,
-  deleteProduct,
-} from "../api/products";
+import { getProducts, deleteProduct } from "../api/products";
 import type { Product } from "../types/products";
 import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
@@ -14,20 +11,19 @@ function Dashboard() {
   const [error, setError] = useState("");
 
   const [category, setCategory] = useState("");
-
+  const [search,setSearch] =  useState("")
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] =
-    useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    loadProducts(category);
-  }, [category]);
+    loadProducts(category,search);
+  }, [category,search]);
 
-  async function loadProducts(category: string) {
+  async function loadProducts(category: string,search: string) {
     try {
       setLoading(true);
 
-      const data = await getProducts(category);
+      const data = await getProducts(category,search);
 
       setProducts(data);
     } catch (err) {
@@ -60,7 +56,7 @@ function Dashboard() {
 
   async function handleDeleteProduct(id: number) {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product?"
+      "Are you sure you want to delete this product?",
     );
 
     if (!confirmDelete) return;
@@ -76,18 +72,17 @@ function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-
       <Header
         onAddProduct={handleAddProduct}
         category={category}
         setCategory={setCategory}
+        search={search}
+        setSearch={setSearch}
       />
 
       {loading && <p>Loading...</p>}
 
-      {error && (
-        <p className="text-red-500">{error}</p>
-      )}
+      {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && (
         <ProductTable
@@ -103,7 +98,6 @@ function Dashboard() {
         selectedProduct={selectedProduct}
         onProductAdded={handleProductSuccess}
       />
-
     </div>
   );
 }

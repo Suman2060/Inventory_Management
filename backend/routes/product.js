@@ -8,38 +8,31 @@ const router = Router();
 router.get("/", async (req, res) => {
     const { category, search, lowStock } = req.query;
     let result;
+    let query =  `SELECT * FROM products` ;
 
     try {
-        if (category) {
-            result = await pool.query(`
-                SELECT * FROM products
-                WHERE category = $1
-                ORDER BY product_id ASC
-            `, [category]);
+        const conditions  =  [];
+        const values  = []
 
-        } else if (search) {
-            result = await pool.query(`
-                SELECT * FROM products
-                WHERE product_name ILIKE $1
-                ORDER BY product_id ASC
-            `, [`%${search}%`]);
-
-        } else if (lowStock) {
-            result = await pool.query(`
-                SELECT * FROM products
-                WHERE quantity < $1
-                ORDER BY product_id ASC
-            `, [lowStock]);
-
-        } else {
-            result = await pool.query(`
-                SELECT * FROM products
-                ORDER BY product_id ASC
-            `);
+        if(category){
+            conditions.push(`category = $${values.length + 1}`)
+            values.push(category)
         }
+        if(search){
+            conditions.push(`product_name ILIKE $${values.length + 1}`)
+            values.push(`%${search}%`)
+        }
+        if(conditions.length>0){
+            query += ` WHERE ${conditions.join(" AND ")}`
+        }
+        query += ` ORDER BY  product_id ASC`
 
-        res.json(result.rows);
+        console.log(query);
+        console.log(values);
+        
+        result = await  pool.query(query,values)
 
+        res.json(result.rows)
     } catch (err) {
         console.error(err.message);
 

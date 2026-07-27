@@ -2,19 +2,28 @@ import type { NewProduct, UpdatedProduct } from "../types/products";
 
 const API_URL = "http://localhost:5000/products";
 
-export async function getProducts(category?: string) {
-  let url = API_URL;
-  if (category) {
-    url += `?category=${category}`;
-  }
+export async function getProducts(category?:string,search?:string) {
+    const params = new URLSearchParams()
 
-  const res = await fetch(url);
+    if(category){
+        params.append("category",category)
+    }
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
-  }
+    if(search){
+        params.append("search",search)
+    }
 
-  return res.json();
+    const url = params.toString()
+            ? `${API_URL}?${params.toString()}`
+            : API_URL;
+
+    const res =  await fetch(url)
+
+    if(!res.ok){
+        throw new Error("Product not found")
+    }
+
+    return res.json()
 }
 
 export async function addProduct(product: NewProduct) {

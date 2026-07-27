@@ -5,12 +5,17 @@ interface HeaderProps {
   onAddProduct: () => void;
   category: string;
   setCategory: React.Dispatch<React.SetStateAction<string>>;
+  search:string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>
+
 }
 
 const Header = ({
   onAddProduct,
   category,
   setCategory,
+  search,
+  setSearch
 }: HeaderProps) => {
   return (
     <header className="flex items-center justify-between mb-8">
@@ -27,7 +32,10 @@ const Header = ({
 
       <div className="flex items-center gap-4">
 
-        <SearchBar />
+        <SearchBar
+        search = {search}
+        setSearch = {setSearch}
+        />
 
         <FilterBar
           category={category}
