@@ -33,6 +33,9 @@ const FilterBar = ({
         <option value="Accessories">
           Accessories
         </option>
+        <option value="Drink">
+          Drink
+        </option>
 
       </select>
 

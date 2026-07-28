@@ -17,7 +17,7 @@ function Dashboard() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [lowStock,setLowStock] =  useState(false)
 
-const debounceSearch =  useDebounce(search,1000)
+const debounceSearch =  useDebounce(search,500)
 
   useEffect(() => {
     loadProducts(category,debounceSearch,lowStock);
