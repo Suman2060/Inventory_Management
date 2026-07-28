@@ -94,12 +94,6 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
         </p>
       )}
 
-      {isFormInvalid && (
-        <p className="text-sm text-blue-500">
-          Enter Product Name and Category to enable submit.
-        </p>
-      ) }
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -133,7 +127,12 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
           onChange={handleChange}
           className="w-full rounded border p-2 focus:border-blue-500 focus:outline-none"
         />
-      
+
+        {isFormInvalid && (
+        <p className="text-sm text-red-500">
+          Enter Product Name and Category to enable submit.
+        </p>
+      ) }
         
           <button
             type="submit"

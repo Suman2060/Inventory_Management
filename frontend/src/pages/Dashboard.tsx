@@ -4,6 +4,7 @@ import type { Product } from "../types/products";
 import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
 import ProductModal from "../components/ProductModal";
+import useDebounce from "../hooks/useDebounce";
 
 function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -16,9 +17,11 @@ function Dashboard() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [lowStock,setLowStock] =  useState(false)
 
+const debounceSearch =  useDebounce(search,1000)
+
   useEffect(() => {
-    loadProducts(category,search,lowStock);
-  }, [category,search,lowStock]);
+    loadProducts(category,debounceSearch,lowStock);
+  }, [category,debounceSearch,lowStock]);
 
   async function loadProducts(category: string,search: string,lowStock:boolean) {
     try {
