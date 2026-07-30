@@ -8,7 +8,7 @@ const router = Router();
 router.get("/", async (req, res) => {
     const { category, search, lowStock } = req.query;
 
-    let query = `SELECT * FROM products`;
+    let query = `SELECT  FROM products`;
 
     try {
         const conditions = [];
@@ -47,9 +47,10 @@ router.get("/", async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
+        throw new Error("Network issue")
 
         res.status(500).json({
-            message: "Server Error",
+            message: "Network Error",
         });
     }
 });
