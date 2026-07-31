@@ -6,53 +6,55 @@ const router = Router();
 
 // GET all products
 router.get("/", async (req, res) => {
-    const { category, search, lowStock } = req.query;
+  const { category, search, lowStock } = req.query;
 
-    let query = `SELECT  FROM products`;
+  let query = "SELECT * FROM products";
 
-    try {
-        const conditions = [];
-        const values = [];
+  try {
 
-        // Category filter
-        if (category) {
-            conditions.push(`category = $${values.length + 1}`);
-            values.push(category);
-        }
+    const conditions = [];
+    const values = [];
 
-        if (search) {
-            conditions.push(`product_name ILIKE $${values.length + 1}`);
-            values.push(`%${search}%`);
-        }
-
-        if (lowStock === "true") {
-            conditions.push(`quantity < $${values.length + 1}`);
-            values.push(10); 
-        }
-
-
-        if (conditions.length > 0) {
-            query += ` WHERE ${conditions.join(" AND ")}`;
-        }
-
-        // Sort products
-        query += ` ORDER BY product_id ASC`;
-
-        console.log("Query:", query);
-        console.log("Values:", values);
-
-        const result = await pool.query(query, values);
-
-        res.json(result.rows);
-
-    } catch (err) {
-        console.error(err.message);
-        throw new Error("Network issue")
-
-        res.status(500).json({
-            message: "Network Error",
-        });
+    // Category filter
+    if (category) {
+      conditions.push(`category = $${values.length + 1}`);
+      values.push(category);
     }
+
+    // Search filter
+    if (search) {
+      conditions.push(`product_name ILIKE $${values.length + 1}`);
+      values.push(`%${search}%`);
+    }
+
+    // Low stock filter
+    if (lowStock === "true") {
+      conditions.push(`quantity < $${values.length + 1}`);
+      values.push(10);
+    }
+
+    // Add WHERE clause if filters exist
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    // Sorting
+    query += " ORDER BY product_id ASC";
+
+    console.log("Query:", query);
+    console.log("Values:", values);
+
+    const result = await pool.query(query, values);
+
+    return res.status(200).json(result.rows);
+
+  } catch (err) {
+    console.error("Error fetching products:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
 });
 
 // POST new product
