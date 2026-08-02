@@ -110,9 +110,12 @@ router.put("/:id", async (req, res) => {
     const { id } = req.params;
     const { product_name, category, price, quantity } = req.body;
 
+  
+
     const fields = [];
     const values = [];
 
+ 
     // Product name
     if (product_name !== undefined) {
         fields.push(`product_name = $${values.length + 1}`);
@@ -156,6 +159,9 @@ router.put("/:id", async (req, res) => {
             `,
             values
         );
+           if(result.rows === 0){
+                return res.status(403).json("Product Not found");
+            }
 
         res.status(200).json({
             message: "Product updated successfully",

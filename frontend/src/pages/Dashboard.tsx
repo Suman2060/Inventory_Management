@@ -5,6 +5,7 @@ import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
 import ProductModal from "../components/ProductModal";
 import useDebounce from "../hooks/useDebounce";
+import { enqueueSnackbar,  } from "notistack";
 
 function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -76,6 +77,17 @@ const debounceSearch =  useDebounce(search,500)
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+
+   
+     <button
+  onClick={() =>
+    enqueueSnackbar("Toast is working!", {
+      variant: "success",
+    })
+  }
+>
+  Test Toast
+</button>
       <Header
         onAddProduct={handleAddProduct}
         category={category}

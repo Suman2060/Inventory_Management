@@ -1,5 +1,6 @@
 import axios from "axios";
 import { apiBaseUrl } from "../constants/enviromentConstants";
+import { enqueueSnackbar } from "notistack";
 
 
 if (!apiBaseUrl) {
@@ -25,21 +26,28 @@ const createApi = (path: string) => {
 
 api.interceptors.response.use(
   (response) =>{
+    console.log(
+      "sucessfully",
+      response.status,
+      response.config.method?.toUpperCase(),
+      response.config.url
+
+    )
     return response;
   },
   (error) =>{
     if(!error.response){
-      console.log("No response from backend");
+      enqueueSnackbar("No response from backend",{variant:"error"})
       return Promise.reject(error)
     }
 
     if(error.response?.status >= 500){
-      console.log("Server Error");
+      enqueueSnackbar("Server Error",{variant:"error"})
       return Promise.reject(error)
     }
 
     if(error.response?.status === 404){
-      console.log("Resource Not Found");
+      enqueueSnackbar("Resource Not Found",{variant:"error"})
       return Promise.reject(error)
     }
 
