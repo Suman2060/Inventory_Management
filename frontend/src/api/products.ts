@@ -4,12 +4,23 @@ import createApi from "../utils/axios";
 
 const  productApi = createApi("/products")
 
-export async function getProducts(category?: string, search?: string, lowStock?: boolean) {
+export async function getProducts(
+    category?: string,
+    search?: string,
+    lowStock?: boolean,
+    page?: number,
+    limit?: number,
+) {
     const {data} = await productApi.get("/", {
         params: {
-            category, search, lowStock
+            category,
+            search,
+            lowStock,
+            page,
+            limit,
         } 
     })
+    console.log(data)
     return data
 }
 

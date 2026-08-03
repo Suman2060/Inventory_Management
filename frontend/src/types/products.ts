@@ -19,3 +19,10 @@ export interface UpdatedProduct {
   price?: number;
   quantity?: number;
 }
+
+export interface Meta {
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  totalRecords: number;
+}

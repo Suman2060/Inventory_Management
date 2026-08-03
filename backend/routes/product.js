@@ -6,12 +6,35 @@ const router = Router();
 
 // GET all products
 router.get("/", async (req, res) => {
-  const { category, search, lowStock } = req.query;
+  const { category, search, lowStock, page, limit } = req.query;
+
+  const pageNumber = page === undefined || page === "" ? 1 : Number(page);
+  const limitSize = limit === undefined || limit === "" ? 10 : Number(limit);
+
+  if (Number.isNaN(pageNumber) || Number.isNaN(limitSize)) {
+    return res.status(400).json({
+      message: "Provide valid page and limit numbers.",
+    });
+  }
+
+  if (pageNumber < 1 || limitSize < 1) {
+    return res.status(400).json({
+      message: "Page and limit must be greater than or equal to 1.",
+    });
+  }
+
+  if (limitSize > 50) {
+    return res.status(400).json({
+      message: "Limit cannot be greater than 50.",
+    });
+  }
+
+  const offSet = (pageNumber - 1) * limitSize;
 
   let query = "SELECT * FROM products";
+  let queryCount = "SELECT COUNT(*) FROM products";
 
   try {
-
     const conditions = [];
     const values = [];
 
@@ -33,20 +56,45 @@ router.get("/", async (req, res) => {
       values.push(10);
     }
 
-    // Add WHERE clause if filters exist
+    // WHERE clause
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(" AND ")}`;
+      queryCount += ` WHERE ${conditions.join(" AND ")}`;
     }
 
-    // Sorting
-    query += " ORDER BY product_id ASC";
+    // Copy filter values for COUNT query
+    const countValues = [...values];
+
+    // Pagination query
+    query += ` ORDER BY product_id ASC`;
+
+    query += ` LIMIT $${values.length + 1}`;
+    values.push(limitSize);
+
+    query += ` OFFSET $${values.length + 1}`;
+    values.push(offSet);
 
     console.log("Query:", query);
+    console.log("Count Query:", queryCount);
     console.log("Values:", values);
 
+    // Execute queries
     const result = await pool.query(query, values);
+    const countResult = await pool.query(queryCount, countValues);
 
-    return res.status(200).json(result.rows);
+    // Metadata
+    const totalRecords = Number(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalRecords / limitSize);
+
+    return res.status(200).json({
+      data: result.rows,
+      meta: {
+        pageNumber,
+        pageSize: limitSize,
+        totalPages,
+        totalRecords,
+      },
+    });
 
   } catch (err) {
     console.error("Error fetching products:", err);

@@ -1,36 +1,39 @@
 import { useEffect, useState } from "react";
 import { getProducts, deleteProduct } from "../api/products";
-import type { Product } from "../types/products";
+import type { Product,Meta } from "../types/products";
 import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
 import ProductModal from "../components/ProductModal";
 import useDebounce from "../hooks/useDebounce";
 import { enqueueSnackbar,  } from "notistack";
+import Pagination from "../components/Pagination";
 
 function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [category, setCategory] = useState("");
   const [search,setSearch] =  useState("")
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [lowStock,setLowStock] =  useState(false)
+  const [page,setPage] =  useState(1);
+  const [limit,setLimit] = useState(10)
+  const [meta,setMeta] = useState<Meta | null>(null)
 
 const debounceSearch =  useDebounce(search,500)
 
   useEffect(() => {
-    loadProducts(category,debounceSearch,lowStock);
-  }, [category,debounceSearch,lowStock]);
+    loadProducts(category,debounceSearch,lowStock,page,limit);
+  }, [category,debounceSearch,lowStock,page,limit]);
 
-  async function loadProducts(category: string,search: string,lowStock:boolean) {
+  async function loadProducts(category: string,search: string,lowStock:boolean,page:number,limit:number) {
     try {
       setLoading(true);
 
-      const data = await getProducts(category,search,lowStock);
-
-      setProducts(data);
+      const response = await getProducts(category,search,lowStock,page,limit);
+      setProducts(response.data);
+      setMeta(response.meta);
     } catch (err) {
       console.error(err);
       setError("Failed to load products.");
@@ -55,7 +58,7 @@ const debounceSearch =  useDebounce(search,500)
   }
 
   function handleProductSuccess() {
-    loadProducts(category,search,lowStock);
+    loadProducts(category,search,lowStock,page,limit);
     handleModalClose();
   }
 
@@ -69,7 +72,7 @@ const debounceSearch =  useDebounce(search,500)
     try {
       await deleteProduct(id);
 
-      loadProducts(category,search,lowStock);
+      loadProducts(category,search,lowStock,page,limit);
     } catch (err) {
       console.error(err);
     }
@@ -109,6 +112,14 @@ const debounceSearch =  useDebounce(search,500)
           onDeleteProduct={handleDeleteProduct}
         />
       )}
+
+      <Pagination
+      page={page}
+      setPage = {setPage}
+      limit = {limit}
+      setLimit={setLimit}
+     totalPages={meta?.totalPages??1}
+      />
 
       <ProductModal
         isOpen={isOpen}

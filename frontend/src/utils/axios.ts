@@ -38,16 +38,19 @@ api.interceptors.response.use(
   (error) =>{
     if(!error.response){
       enqueueSnackbar("No response from backend",{variant:"error"})
+      console.log("No response from backend")
       return Promise.reject(error)
     }
 
     if(error.response?.status >= 500){
       enqueueSnackbar("Server Error",{variant:"error"})
+      console.log("Server Error")
       return Promise.reject(error)
     }
 
     if(error.response?.status === 404){
       enqueueSnackbar("Resource Not Found",{variant:"error"})
+      console.log("Resources Not Found")
       return Promise.reject(error)
     }
 
