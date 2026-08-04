@@ -1,24 +1,13 @@
 import { enqueueSnackbar } from "notistack";
-import type { NewProduct, UpdatedProduct } from "../types/products";
+import type { IRequestParams, NewProduct, UpdatedProduct } from "../types/products";
 import createApi from "../utils/axios";
 
 const  productApi = createApi("/products")
 
-export async function getProducts(
-    category?: string,
-    search?: string,
-    lowStock?: boolean,
-    page?: number,
-    limit?: number,
+export async function getProducts( params :IRequestParams
 ) {
     const {data} = await productApi.get("/", {
-        params: {
-            category,
-            search,
-            lowStock,
-            page,
-            limit,
-        } 
+        params
     })
     console.log(data)
     return data

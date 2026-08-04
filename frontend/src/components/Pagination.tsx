@@ -1,33 +1,41 @@
+import type React from "react";
+import type { IRequestParams } from "../types/products";
+
 interface PaginationProps {
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-
-  limit: number;
-  setLimit: React.Dispatch<React.SetStateAction<number>>;
-
-  totalPages: number;
+requestParams:IRequestParams
+setRequestParams:React.Dispatch<React.SetStateAction<IRequestParams>>
+totalPages:number
 }
 
 const Pagination = ({
-  page,
-  setPage,
-  limit,
-  setLimit,
-  totalPages,
+ requestParams,setRequestParams,totalPages
+
 }: PaginationProps) => {
 
   function handleLimitChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setLimit(Number(event.target.value));
-    setPage(1);
+    // setLimit(Number(event.target.value));
+    // setPage(1);
+       setRequestParams((prev)=> {
+        return{
+            ...prev,
+            limit:Number(event.target.value),
+            page:1,
+        }
+    })
   }
 
   return (
     <div className="mt-6 flex items-center justify-between border-t pt-4">
 
-      {/* Previous */}
+      
       <button
-        disabled={page === 1}
-        onClick={() => setPage(prev => prev - 1)}
+        disabled={requestParams.page === 1}
+        onClick={() =>
+          setRequestParams((prev) => ({
+            ...prev,
+            page: (prev.page ?? 1) - 1,
+          }))
+        }
         className="rounded-md border px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Previous
@@ -36,7 +44,7 @@ const Pagination = ({
 
       {/* Page Info */}
       <div className="text-sm font-medium">
-        Page {page} of {totalPages}
+        Page {requestParams.page} of {totalPages}
       </div>
 
 
@@ -48,7 +56,7 @@ const Pagination = ({
         </label>
 
         <select
-          value={limit}
+          value={requestParams.limit}
           onChange={handleLimitChange}
           className="rounded-md border px-2 py-1"
         >
@@ -61,8 +69,13 @@ const Pagination = ({
 
 
         <button
-          disabled={page === totalPages}
-          onClick={() => setPage(prev => prev + 1)}
+          disabled={requestParams.page === totalPages}
+          onClick={() =>
+            setRequestParams((prev) => ({
+              ...prev,
+              page: (prev.page ?? 1) + 1,
+            }))
+          }
           className="rounded-md border px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next

@@ -26,3 +26,11 @@ export interface Meta {
   totalPages: number;
   totalRecords: number;
 }
+
+export interface IRequestParams  {
+    category?: string | null
+    search?: string | null,
+    lowStock?: boolean,
+    page?: number,
+    limit?: number,
+   }

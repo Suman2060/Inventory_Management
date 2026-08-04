@@ -1,37 +1,50 @@
 import { useEffect, useState } from "react";
 import { getProducts, deleteProduct } from "../api/products";
-import type { Product,Meta } from "../types/products";
+import type { Product,Meta, IRequestParams } from "../types/products";
 import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
 import ProductModal from "../components/ProductModal";
 import useDebounce from "../hooks/useDebounce";
-import { enqueueSnackbar,  } from "notistack";
+
 import Pagination from "../components/Pagination";
 
 function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [category, setCategory] = useState("");
-  const [search,setSearch] =  useState("")
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [lowStock,setLowStock] =  useState(false)
-  const [page,setPage] =  useState(1);
-  const [limit,setLimit] = useState(10)
   const [meta,setMeta] = useState<Meta | null>(null)
 
-const debounceSearch =  useDebounce(search,500)
+  const [requestParams,setRequestParams] = useState<IRequestParams>({
+    category:   null,
+    search:  null,
+    lowStock: false,
+    page: 1,
+    limit:10
+  })
 
-  useEffect(() => {
-    loadProducts(category,debounceSearch,lowStock,page,limit);
-  }, [category,debounceSearch,lowStock,page,limit]);
+const debounceSearch =  useDebounce(requestParams.search ?? "",500)
+const debouncedRequestParams = {
+  ...requestParams,
+  search: debounceSearch
+}
 
-  async function loadProducts(category: string,search: string,lowStock:boolean,page:number,limit:number) {
+useEffect(() => {
+  loadProducts();
+}, [
+  requestParams.category,
+  requestParams.lowStock,
+  requestParams.page,
+  requestParams.limit,
+  debounceSearch,
+]);
+
+  async function loadProducts() {
     try {
       setLoading(true);
 
-      const response = await getProducts(category,search,lowStock,page,limit);
+      const response = await getProducts(debouncedRequestParams);
       setProducts(response.data);
       setMeta(response.meta);
     } catch (err) {
@@ -58,7 +71,7 @@ const debounceSearch =  useDebounce(search,500)
   }
 
   function handleProductSuccess() {
-    loadProducts(category,search,lowStock,page,limit);
+    loadProducts();
     handleModalClose();
   }
 
@@ -72,7 +85,7 @@ const debounceSearch =  useDebounce(search,500)
     try {
       await deleteProduct(id);
 
-      loadProducts(category,search,lowStock,page,limit);
+      loadProducts();
     } catch (err) {
       console.error(err);
     }
@@ -80,25 +93,10 @@ const debounceSearch =  useDebounce(search,500)
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-
-   
-     <button
-  onClick={() =>
-    enqueueSnackbar("Toast is working!", {
-      variant: "success",
-    })
-  }
->
-  Test Toast
-</button>
       <Header
         onAddProduct={handleAddProduct}
-        category={category}
-        setCategory={setCategory}
-        search={search}
-        setSearch={setSearch}
-        lowStock= {lowStock}
-        setLowStock ={setLowStock}
+        requestParams =  {requestParams}
+        setRequestParams = {setRequestParams}
       />
 
       {loading && <p>Loading...</p>}
@@ -114,10 +112,8 @@ const debounceSearch =  useDebounce(search,500)
       )}
 
       <Pagination
-      page={page}
-      setPage = {setPage}
-      limit = {limit}
-      setLimit={setLimit}
+      requestParams={requestParams}
+      setRequestParams={setRequestParams}
      totalPages={meta?.totalPages??1}
       />
 

@@ -1,25 +1,28 @@
-interface FilterBarProps {
-  category: string;
-  setCategory: React.Dispatch<React.SetStateAction<string>>;
-  lowStock: boolean;
-  setLowStock: React.Dispatch<React.SetStateAction<boolean>>;
-}
+import type { IRequestParams } from "../types/products";
 
+interface FilterBarProps {
+  requestParams: IRequestParams;
+  setRequestParams: React.Dispatch<
+    React.SetStateAction<IRequestParams>
+  >;
+}
 const FilterBar = ({
-  category,
-  setCategory,
-  lowStock,
-  setLowStock
+  requestParams,setRequestParams
 }: FilterBarProps) => {
 
   return (
+    <>
     <div className="flex items-center gap-3">
 
       <select
-        value={category}
+        value={requestParams.category ?? ""}
         onChange={(e) =>
-          setCategory(e.target.value)
-        }
+          setRequestParams((prev)=>({
+            ...prev,
+            category: e.target.value,
+            page: 1
+          }))
+          }
         className="px-4 py-2 border border-gray-300 rounded-lg"
       >
         <option value="">
@@ -41,18 +44,23 @@ const FilterBar = ({
 
       <button
         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          lowStock
+         requestParams.lowStock
             ? "bg-yellow-600 text-white ring-2 ring-yellow-400 font-semibold"
             : "bg-yellow-500 text-white hover:bg-yellow-600"
         }`}
         onClick={() => {
-          setLowStock((prev) => !prev);
+          setRequestParams((prev) => ({
+            ...prev,
+            lowStock:!prev.lowStock,
+            page:1
+          }));
         }}
       >
-        Low Stock {lowStock ? "(Active)" : ""}
+        Low Stock {requestParams.lowStock ? "(Active)" : ""}
       </button>
 
     </div>
+  </>
   );
 };
 

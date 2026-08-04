@@ -1,26 +1,21 @@
-import SearchBar from "./SearchBar";
-import FilterBar from "./FilterBar";
+  import SearchBar from "./SearchBar";
+  import FilterBar from "./FilterBar";
+  import type { IRequestParams } from "../types/products";
 
-interface HeaderProps {
-  onAddProduct: () => void;
-  category: string;
-  setCategory: React.Dispatch<React.SetStateAction<string>>;
-  search:string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-  lowStock:boolean;
-  setLowStock: React.Dispatch<React.SetStateAction<boolean>>;
+  interface HeaderProps {
+    onAddProduct: () => void;
+    requestParams:IRequestParams,
+    setRequestParams: React.Dispatch<
+    React.SetStateAction<IRequestParams>
+  >;
 
-}
+  }
 
-const Header = ({
-  onAddProduct,
-  category,
-  setCategory,
-  search,
-  setSearch,
-  lowStock,
-  setLowStock
-}: HeaderProps) => {
+  const Header = ({
+    onAddProduct,
+    requestParams,
+    setRequestParams
+  }: HeaderProps) => {
   return (
     <header className="flex items-center justify-between mb-8">
 
@@ -37,15 +32,15 @@ const Header = ({
       <div className="flex items-center gap-4">
 
         <SearchBar
-        search = {search}
-        setSearch = {setSearch}
+          requestParams = {requestParams}
+          setRequestParams = {setRequestParams}
+
         />
 
         <FilterBar
-          category={category}
-          setCategory={setCategory}
-          lowStock = {lowStock}
-          setLowStock={setLowStock}
+           requestParams = {requestParams}
+          setRequestParams = {setRequestParams}
+
         />
 
         <button
