@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getProducts, deleteProduct } from "../api/products";
-import type { Product,Meta, IRequestParams } from "../types/products";
+import type { Product, Meta, IRequestParams } from "../types/products";
 import ProductTable from "../components/ProductTable";
 import Header from "../components/Header";
 import ProductModal from "../components/ProductModal";
@@ -14,37 +14,36 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [meta,setMeta] = useState<Meta | null>(null)
+  const [meta, setMeta] = useState<Meta | null>(null);
 
-  const [requestParams,setRequestParams] = useState<IRequestParams>({
-    category:   null,
-    search:  null,
+  const [requestParams, setRequestParams] = useState<IRequestParams>({
+    category: null,
+    search: null,
     lowStock: false,
     page: 1,
-    limit:10
-  })
+    limit: 10,
+  });
 
-const debounceSearch =  useDebounce(requestParams.search ?? "",500)
-const debouncedRequestParams = {
-  ...requestParams,
-  search: debounceSearch
-}
+  const debounceSearch = useDebounce(requestParams.search ?? "", 500);
 
-useEffect(() => {
-  loadProducts();
-}, [
-  requestParams.category,
-  requestParams.lowStock,
-  requestParams.page,
-  requestParams.limit,
-  debounceSearch,
-]);
+  useEffect(() => {
+    loadProducts();
+  }, [
+    ...Object.values(requestParams).map((val) => {
+      if (val === requestParams.search) return;
+      return val;
+    }),
+    debounceSearch,
+  ]);
 
   async function loadProducts() {
     try {
       setLoading(true);
 
-      const response = await getProducts(debouncedRequestParams);
+      const response = await getProducts({
+    ...requestParams,
+    search: debounceSearch ? debounceSearch : null,
+      });
       setProducts(response.data);
       setMeta(response.meta);
     } catch (err) {
@@ -95,8 +94,8 @@ useEffect(() => {
     <div className="max-w-6xl mx-auto p-6">
       <Header
         onAddProduct={handleAddProduct}
-        requestParams =  {requestParams}
-        setRequestParams = {setRequestParams}
+        requestParams={requestParams}
+        setRequestParams={setRequestParams}
       />
 
       {loading && <p>Loading...</p>}
@@ -104,7 +103,7 @@ useEffect(() => {
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <ProductTable
+        <ProductTable 
           products={products}
           onEditProduct={handleEditProduct}
           onDeleteProduct={handleDeleteProduct}
@@ -112,9 +111,9 @@ useEffect(() => {
       )}
 
       <Pagination
-      requestParams={requestParams}
-      setRequestParams={setRequestParams}
-     totalPages={meta?.totalPages??1}
+        requestParams={requestParams}
+        setRequestParams={setRequestParams}
+        totalPages={meta?.totalPages ?? 1}
       />
 
       <ProductModal

@@ -4,6 +4,7 @@ export interface Product {
   category: string;
   price: number;
   quantity: number;
+  discounted_price:number;
 }
 
 export interface NewProduct {

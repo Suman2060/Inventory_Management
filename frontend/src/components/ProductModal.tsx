@@ -14,7 +14,6 @@ const ProductModal = ({
     selectedProduct,
     onProductAdded,
 }: ProductModalProps) => {
-
     if (!isOpen) return null;
 
     return (
@@ -38,6 +37,7 @@ const ProductModal = ({
                 </div>
 
                 <ProductForm
+                    key={selectedProduct?.product_id ?? "new"}
                     selectedProduct={selectedProduct}
                     onProductAdded={onProductAdded}
                 />
