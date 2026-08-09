@@ -1,12 +1,12 @@
 import type { Product } from "../types/products";
 
 interface ProductTableProps {
-    products: Product[];
-    onEditProduct: (product: Product) => void;
-    onDeleteProduct: (id: number)=>void;
+  products: Product[];
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (id: number) => void;
 }
 
-const ProductTable = ({ products, onEditProduct,onDeleteProduct }: ProductTableProps) => {
+const ProductTable = ({ products, onEditProduct, onDeleteProduct }: ProductTableProps) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full border border-gray-300">
@@ -25,7 +25,7 @@ const ProductTable = ({ products, onEditProduct,onDeleteProduct }: ProductTableP
             <tr key={product.product_id}>
               <td className="border px-4 py-2">{product.product_name}</td>
 
-              <td className="border px-4 py-2">{product.category}</td>
+              <td className="border px-4 py-2">{product.category_name ?? product.category_id}</td>
 
               <td className="border px-4 py-2">Rs. {product.price}</td>
 
@@ -37,7 +37,7 @@ const ProductTable = ({ products, onEditProduct,onDeleteProduct }: ProductTableP
                 >
                   Edit
                 </button>
-                 <button
+                <button
                   onClick={() => onDeleteProduct(product.product_id)}
                   className="px-3 m-2.5 py-1 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition duration-200"
                 >

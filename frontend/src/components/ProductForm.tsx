@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addProduct, updateProduct } from "../api/products";
 import type { Product } from "../types/products";
 import { enqueueSnackbar } from "notistack";
+import type { Category } from "../types/category";
+import { getCategories, createCategory } from "../api/categories";
 
 interface ProductFormProps {
   onProductAdded: () => void;
@@ -10,7 +12,7 @@ interface ProductFormProps {
 
 const initialFormData = {
   product_name: "",
-  category: "",
+  category_id: "",
   price: "",
   quantity: "",
   discountType: "",
@@ -21,19 +23,40 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
   const [formData, setFormData] = useState(() =>
     selectedProduct
       ? {
-          product_name: selectedProduct.product_name,
-          category: selectedProduct.category,
-          price: selectedProduct.price.toString(),
-          quantity: selectedProduct.quantity.toString(),
-          discountType: "",
-          discountValue: "",
-        }
+        product_name: selectedProduct.product_name,
+        category_id: selectedProduct.category_id
+          ? String(selectedProduct.category_id)
+          : "",
+        price: selectedProduct.price.toString(),
+        quantity: selectedProduct.quantity.toString(),
+        discountType: "",
+        discountValue: "",
+      }
       : initialFormData,
   );
-  const [error, setError] = useState("");
 
-  const isFormInvalid =
-    !formData.product_name.trim() || !formData.category.trim();
+  const [error, setError] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await getCategories();
+
+        setCategories(data);
+      } catch (err) {
+        console.error(err);
+
+        setError("Failed to load categories.");
+      }
+    }
+
+    loadCategories();
+  }, []);
+
+  const isFormInvalid = !formData.product_name.trim() || !formData.category_id;
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -105,7 +128,6 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
     }
 
     if (!formData.discountType || formData.discountValue === "") {
-      console.log("Enter Type or discount Value ");
       return formData.price;
     }
 
@@ -120,7 +142,7 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
     return formData.price;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     setError("");
@@ -130,7 +152,7 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
       return;
     }
 
-    if (!formData.category.trim()) {
+    if (!formData.category_id) {
       setError("Category is required.");
       return;
     }
@@ -141,7 +163,7 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
 
     const productData = {
       product_name: formData.product_name.trim(),
-      category: formData.category.trim(),
+      category_id: Number(formData.category_id),
       price: Number(calculateFinalPrice()),
       quantity: Number(formData.quantity),
     };
@@ -164,6 +186,40 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
     }
   }
 
+  async function handleCreateCategory() {
+    const categoryName = newCategory.trim();
+
+    if (!categoryName) {
+      enqueueSnackbar("Category name is requited", {
+        variant: "error",
+      });
+      return;
+    }
+    try {
+      const createdCategory = await createCategory(categoryName);
+
+      setCategories((prev) => [...prev, createdCategory]);
+
+      setFormData((prev) => ({
+        ...prev,
+        category_id: String(createdCategory.category_id),
+      }));
+
+      setNewCategory("");
+      setShowCategoryForm(false);
+
+      enqueueSnackbar("Category Created Successfully", {
+        variant: "success",
+      });
+    } catch (err) {
+      console.error(err);
+
+      enqueueSnackbar("Failed to create category", {
+        variant: "error",
+      });
+    }
+  }
+
   return (
     <>
       {error && (
@@ -182,14 +238,56 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
           className="w-full rounded border p-2 focus:border-blue-500 focus:outline-none"
         />
 
-        <input
-          type="text"
-          name="category"
-          placeholder="Category"
-          value={formData.category}
-          onChange={handleChange}
-          className="w-full rounded border p-2 focus:border-blue-500 focus:outline-none"
-        />
+        {/* Category */}
+        {/* Category */}
+        <div>
+          <label className="mb-1 block text-sm font-medium">Category</label>
+
+          <div className="flex gap-2">
+            <select
+              name="category_id"
+              value={formData.category_id}
+              onChange={handleChange}
+              className="flex-1 rounded border p-2 focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Category</option>
+
+              {categories.map((category) => (
+                <option key={category.category_id} value={category.category_id}>
+                  {category.category_name}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setShowCategoryForm((prev) => !prev)}
+              className="rounded bg-green-600 px-3 py-2 text-white hover:bg-green-700"
+            >
+              + New
+            </button>
+          </div>
+
+          {showCategoryForm && (
+            <div className="mt-2 flex gap-2">
+              <input
+                type="text"
+                placeholder="New category name"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="flex-1 rounded border p-2 focus:border-blue-500 focus:outline-none"
+              />
+
+              <button
+                type="button"
+                onClick={handleCreateCategory}
+                className="rounded bg-blue-600 px-3 py-2 text-white hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </div>
 
         <input
           type="number"
@@ -267,7 +365,7 @@ const ProductForm = ({ onProductAdded, selectedProduct }: ProductFormProps) => {
           className="rounded bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {selectedProduct ? "Update Product" : "Save Product"}
-        </button>
+          </button>
       </form>
     </>
   );

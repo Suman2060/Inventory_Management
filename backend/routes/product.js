@@ -1,6 +1,6 @@
 import { Router } from "express";
 import pool from "../db/db.js";
-import { isNumber, isUnique } from "..//validation/productValidation.js"
+import { isNumber, isUnique } from "..//validation/productValidation.js";
 
 const router = Router();
 
@@ -31,42 +31,46 @@ router.get("/", async (req, res) => {
 
   const offSet = (pageNumber - 1) * limitSize;
 
-  let query = "SELECT * FROM products";
-  let queryCount = "SELECT COUNT(*) FROM products";
+  let query = `
+    SELECT p.*, c.category_name
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.category_id
+  `;
+  let queryCount = "SELECT COUNT(*) FROM products p";
 
   try {
     const conditions = [];
     const values = [];
 
-    // Category filter
+    // Category filter (category_id from the categories table)
     if (category) {
-      conditions.push(`category = $${values.length + 1}`);
-      values.push(category);
+      conditions.push(`p.category_id = $${values.length + 1}`);
+      values.push(Number(category));
     }
 
     // Search filter
     if (search) {
-      conditions.push(`product_name ILIKE $${values.length + 1}`);
+      conditions.push(`p.product_name ILIKE $${values.length + 1}`);
       values.push(`%${search}%`);
     }
 
     // Low stock filter
     if (lowStock === "true") {
-      conditions.push(`quantity < $${values.length + 1}`);
+      conditions.push(`p.quantity < $${values.length + 1}`);
       values.push(10);
     }
 
     // WHERE clause
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(" AND ")}`;
-      queryCount += ` WHERE ${conditions.join(" AND ")}`;
+      queryCount += ` LEFT JOIN categories c ON p.category_id = c.category_id WHERE ${conditions.join(" AND ")}`;
     }
 
     // Copy filter values for COUNT query
     const countValues = [...values];
 
     // Pagination query
-    query += ` ORDER BY product_id ASC`;
+    query += ` ORDER BY p.product_id ASC`;
 
     query += ` LIMIT $${values.length + 1}`;
     values.push(limitSize);
@@ -95,168 +99,237 @@ router.get("/", async (req, res) => {
         totalRecords,
       },
     });
-
   } catch (err) {
     console.error("Error fetching products:", err);
 
     return res.status(500).json({
       message: "Internal Server Error",
+      error: err.message,
+      detail: err.detail,
     });
   }
 });
 
-// POST new product
+// POST  product
+
 router.post("/", async (req, res) => {
-    const { product_name, category, price, quantity } = req.body;
+  const {
+    product_name,
+    category_id,
+    price,
+    quantity,
+  } = req.body;
 
-    try {
-    
-        if (!product_name || !category) {
-            return res.status(400).json({
-                message: "product_name and category are required"
-            });
-        }
-
-        await isNumber(price);
-        await isNumber(quantity);
-        await isUnique(product_name);
-
-        const result = await pool.query(
-            `
-            INSERT INTO products
-            (product_name, category, price, quantity)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *;
-            `,
-            [product_name, category, price, quantity]
-        );
-
-        res.status(201).json({
-            message: "Product added successfully",
-            product: result.rows[0]
-        });
-
-    } catch (err) {
-        console.error("Error adding product:", err.message);
-
-        if (err.message === "Expected a number") {
-            return res.status(400).json({ message: err.message });
-        }
-
-        if (err.message === "Product already exists") {
-            return res.status(409).json({ message: err.message });
-        }
-
-        res.status(500).json({
-            message: "Server Error"
-        });
+  try {
+    // Required fields
+    if (
+      !product_name ||
+      category_id === undefined ||
+      category_id === null ||
+      category_id === ""
+    ) {
+      return res.status(400).json({
+        message: "product_name and category_id are required",
+      });
     }
+
+    // Validate numbers
+    await isNumber(category_id);
+    await isNumber(price);
+    await isNumber(quantity);
+
+    // Check category exists
+    const categoryResult = await pool.query(
+      `
+      SELECT category_id
+      FROM categories
+      WHERE category_id = $1
+      `,
+      [category_id],
+    );
+
+    if (categoryResult.rows.length === 0) {
+      return res.status(400).json({
+        message: "Selected category does not exist",
+      });
+    }
+
+    // Check duplicate product
+    await isUnique(product_name);
+
+    // Insert product
+    const result = await pool.query(
+      `
+      INSERT INTO products
+        (product_name, category_id, price, quantity)
+      VALUES
+        ($1, $2, $3, $4)
+      RETURNING *;
+      `,
+      [
+        product_name.trim(),
+        Number(category_id),
+        Number(price),
+        Number(quantity),
+      ],
+    );
+
+    return res.status(201).json({
+      message: "Product added successfully",
+      product: result.rows[0],
+    });
+
+  } catch (err) {
+    console.error("Error adding product:", err.message);
+
+    if (err.message === "Expected a number") {
+      return res.status(400).json({
+        message: err.message,
+      });
+    }
+
+    if (err.message === "Product already exists") {
+      return res.status(409).json({
+        message: err.message,
+      });
+    }
+
+    // PostgreSQL foreign-key violation
+    if (err.code === "23503") {
+      return res.status(400).json({
+        message: "Selected category does not exist",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Server Error",
+      error: err.message,
+      detail: err.detail,
+    });
+  }
 });
 
 // PUT update product
 router.put("/:id", async (req, res) => {
-    const { id } = req.params;
-    const { product_name, category, price, quantity } = req.body;
+  const { id } = req.params;
+  const { product_name,  category_id, price, quantity } = req.body;
+console.log("PUT category_id:", category_id);
 
-  
+  if(category_id !== undefined){
+  const categoryResult = await pool.query(
+    `
+    SELECT category_id
+    FROM categories
+    WHERE category_id = $1
+    `,
+    [category_id],
+  );
 
-    const fields = [];
-    const values = [];
+  if(categoryResult.rows.length === 0){
+      return res.status(400).json({
+      message: "Selected category does not exist",
+    });
 
- 
-    // Product name
-    if (product_name !== undefined) {
-        fields.push(`product_name = $${values.length + 1}`);
-        values.push(product_name);
-    }
+  }
+  }
 
-    // Category
-    if (category !== undefined) {
-        fields.push(`category = $${values.length + 1}`);
-        values.push(category);
-    }
 
-    // Price
-    if (price !== undefined) {
-        fields.push(`price = $${values.length + 1}`);
-        values.push(price);
-    }
+  const fields = [];
+  const values = [];
 
-    // Quantity
-    if (quantity !== undefined) {
-        fields.push(`quantity = $${values.length + 1}`);
-        values.push(quantity);
-    }
+  // Product name
+  if (product_name !== undefined) {
+    fields.push(`product_name = $${values.length + 1}`);
+    values.push(product_name);
+  }
 
-    // Nothing to update
-    if (fields.length === 0) {
-        return res.status(400).json({
-            message: "No fields to update",
-        });
-    }
+  // Category
+  if (category_id !== undefined) {
+    fields.push(`category_id = $${values.length + 1}`);
+    values.push(categoryValue);
+  }
 
-    values.push(id);
+  // Price
+  if (price !== undefined) {
+    fields.push(`price = $${values.length + 1}`);
+    values.push(price);
+  }
 
-    try {
-        const result = await pool.query(
-            `
+  // Quantity
+  if (quantity !== undefined) {
+    fields.push(`quantity = $${values.length + 1}`);
+    values.push(quantity);
+  }
+
+  // Nothing to update
+  if (fields.length === 0) {
+    return res.status(400).json({
+      message: "No fields to update",
+    });
+  }
+
+  values.push(id);
+
+  try {
+    const result = await pool.query(
+      `
             UPDATE products
             SET ${fields.join(", ")}
             WHERE product_id = $${values.length}
             RETURNING *;
             `,
-            values
-        );
-           if(result.rows === 0){
-                return res.status(403).json("Product Not found");
-            }
-
-        res.status(200).json({
-            message: "Product updated successfully",
-            product: result.rows[0],
-        });
-
-    } catch (err) {
-        console.error(err.message);
-
-        res.status(500).json({
-            message: "Server Error",
-        });
+      values,
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json("Product Not found");
     }
+
+    res.status(200).json({
+      message: "Product updated successfully",
+      product: result.rows[0],
+    });
+  } catch (err) {
+    console.error(err.message);
+
+    res.status(500).json({
+      message: "Server Error",
+      error: err.message,
+      detail: err.detail,
+    });
+  }
 });
 
 // DELETE product
 router.delete("/:id", async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    try {
-        const result = await pool.query(
-            `
+  try {
+    const result = await pool.query(
+      `
             DELETE FROM products
             WHERE product_id = $1
             RETURNING *;
             `,
-            [id]
-        );
+      [id],
+    );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({
-                message: "Product not found"
-            });
-        }
-
-        res.status(200).json({
-            message: "Product deleted successfully",
-            product: result.rows[0]
-        });
-
-    } catch (err) {
-        console.error(err.message);
-
-        res.status(500).json({
-            message: "Server Error"
-        });
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
     }
+
+    res.status(200).json({
+      message: "Product deleted successfully",
+      product: result.rows[0],
+    });
+  } catch (err) {
+    console.error(err.message);
+
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
 });
 
 export default router;
